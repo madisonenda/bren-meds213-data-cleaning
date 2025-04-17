@@ -68,23 +68,28 @@ snowsurvey_csv %>%
 Interestingly, when there is a "dot" for snow cover, it is also the case for all the other covers. Let's replace those with NA since there is no supplemental information in the provided metadata about the use of dots
 
 ```{r}
-snowsurvey_fixed <- 
+snowsurvey_csv[snowsurvey_csv=="."] = NA
+snowsurvey_fixed <- snowsurvey_csv
 ```
 
 #### `-` values
 
-Is he problem is similar with "-"?
+Is the problem similar with "-"?
 
 ```{r}
-snowsurvey_csv 
+snowsurvey_csv %>%
+  filter(Snow_cover == "-") %>%
+  View()
 ```
 
 
 let's set it to NA:
 
 ```{r}
-snowsurvey_fixed <- 
+snowsurvey_fixed[snowsurvey_fixed =="-"] = NA
 ```
+
+- Since the df is reassigning into itself using this method, I do not need to use '<-' to assign it to 'snowsurvey_fixed' each time
 
 #### `n/a` values
 
@@ -92,15 +97,15 @@ snowsurvey_fixed <-
 
 ```{r}
 snowsurvey_csv %>%
-  
+   filter(Snow_cover == "n/a") %>%
+  View()
 ```
 
 
 Same pattern, let's substitute with NA:
 
 ```{r}
-snowsurvey_fixed <- 
- 
+snowsurvey_fixed[snowsurvey_fixed =="n/a"] = NA
 ```
 
 #### `unk` values
@@ -109,12 +114,13 @@ What about "unk"? It is probably an abbreviation for unknown:
 
 ```{r}
 snowsurvey_csv %>%
-  
+     filter(Snow_cover == "unk") %>%
+  View()
 ```
 
 
 ```{r}
-snowsurvey_fixed <- 
+snowsurvey_fixed[snowsurvey_fixed =="unk"] = NA
 ```
 
 #### `<1` values
@@ -122,11 +128,15 @@ snowsurvey_fixed <-
 Finally What should we replace"<1" with?
 
 ```{r}
-
+snowsurvey_csv %>%
+     filter(Snow_cover == "<1") %>%
+  View()
 ```
 
-```{r}
+- We are going to replace <1 with a 0, as the rest of the area columns add up to 100% without it. We have to use ""to make zero a character string for now, until we convert all the column to numeric
 
+```{r}
+snowsurvey_fixed[snowsurvey_fixed =="<1"] = "0"
 ```
 
 
@@ -143,8 +153,14 @@ snowsurvey_fixed %>%
 Ok, we can do the transformation:
 
 ```{r}
-snowsurvey_fixed <- 
+snowsurvey_fixed <- transform(snowsurvey_fixed, 
+                              Snow_cover = as.numeric(Snow_cover),
+                              Water_cover = as.numeric(Water_cover),
+                              Land_cover = as.numeric(Land_cover),
+                              Total_cover = as.numeric(Total_cover))
 ```
+
+- By using 'as.numeric', we transform the cover columns to numeric types, and NA's are coerced to NA values (missing).
 
 Yeah we have finally a numeric column 🎉. 
 
@@ -154,20 +170,21 @@ Yeah we have finally a numeric column 🎉.
 We are dealing with percentages, so we should verify that all the values are between 0 and 100:
 
 ```{r}
- snowsurvey_fixed 
+unique(snowsurvey_fixed$Total_cover)
 ```
 
 We have two values above 100, with an interesting 470%! ☃️ We should probably set those values to NAs:
 
 ```{r}
-snowsurvey_fixed <- 
+snowsurvey_fixed[snowsurvey_fixed > 100 ] = NA
 ```
+
+- There ended up being many values over 100, so we had to replace them all using the same method we used earlier
 
 Let's check for negative values:
 
 ```{r}
- snowsurvey_fixed %>%
-  
+unique(snowsurvey_fixed$Total_cover)  
 ```
 
 No negative value detected ✅
@@ -213,14 +230,22 @@ This data model is not convenient for a database, we will have to switch to a lo
 ### Data cleaning
 
 ```{r}
-species_long <- 
-```
 
+species_csv<- species_csv %>%
+  mutate_all(as.character)
+
+species_long <- species_csv %>%
+  pivot_longer(cols= !c(Year, Site, Date, Jdate, Num_observers, All_obs_reported, Observer_hours),
+              names_to= "species", 
+              values_to= "species_counts",
+              values_transform= list(species_count= as.character))
+```
 
 We want to focus on the presence and absence of species and not the count. Let's create a new column for presence where anything else than 0 is considered present
 
 ```{r}
 species_presence <- species_long %>%
+  mutate(species_presence = ifelse(species_counts == "0", 0, 1))
   
 ```
 
@@ -228,7 +253,8 @@ We can remove some columns: "Num_observers", "All_obs_reported", "Observer_hours
 
 ```{r}
 species_presence <- species_presence %>%
-  
+   filter(species_presence == 1) %>%
+  select(-c(Num_observers, All_obs_reported, Observer_hours, species_counts))
 
 ```
 

@@ -1,0 +1,147 @@
+---
+title: "eds213_data_cleaning_assign_Enda"
+author: "Madison Enda"
+format: html
+editor: visual
+---
+
+
+```{r}
+#| message: false  
+
+# Libraries
+library(tidyverse)
+
+# file names
+datadir_raw <- file.path("data","raw")
+
+datadir_processed <- file.path("data", "processed/")
+
+species_file <- "ASDN_Daily_species.csv"
+
+snowsurvey_file <- "ASDN_Snow_survey.csv"
+```
+
+
+```{r}
+# Import the species
+snowsurvey_csv <- read_csv(file.path(datadir_raw, snowsurvey_file))
+# Take a brief lok at the data
+glimpse(snowsurvey_csv)
+
+```
+```{r}
+# Check odd values in the snow_cover column
+snowsurvey_csv %>%
+  count(Snow_cover)
+```
+
+```{r}
+# Check odd values in the snow_cover column
+snowsurvey_csv %>%
+  count(Water_cover)
+```
+
+```{r}
+# Check odd values in the snow_cover column
+snowsurvey_csv %>%
+  count(Land_cover)
+```
+```{r}
+# Check odd values in the snow_cover column
+snowsurvey_csv %>%
+  count(Total_cover)
+```
+
+- All the columns contain periods and dashes that need to be removed, but some also have negative area values, or values above 100. All of these will have to be removed or reset, as well as any other unnecessary terms. 
+
+- I decided to use a method that cleans all columns of specified observations at once, and reassigns to itself so there is no need to use '<-' to reassigning it again (after the first name change).
+
+```{r}
+# Remove all characters not needed in the data
+snowsurvey_csv[snowsurvey_csv=="."] = NA # Set periods to NA as they hold no value
+snowsurvey_fixed <- snowsurvey_csv
+
+snowsurvey_fixed[snowsurvey_fixed =="-"] = NA # Set dashes to NA as they hold no value
+
+snowsurvey_fixed[snowsurvey_fixed =="n/a"] = NA # Set n/a to NA as they hold no value
+
+snowsurvey_fixed[snowsurvey_fixed =="unk"] = NA # Set unk to NA as they hold no value
+
+snowsurvey_fixed[snowsurvey_fixed =="<1"] = "0" # Set <1 to 0 as the rest of the percentages add up to 100% without it
+```
+
+- Next, we will make all the area columns numeric so we can compare percentages across columns by using transform.
+
+```{r}
+snowsurvey_fixed <- transform(snowsurvey_fixed, 
+                              Snow_cover = as.numeric(Snow_cover),
+                              Water_cover = as.numeric(Water_cover),
+                              Land_cover = as.numeric(Land_cover),
+                              Total_cover = as.numeric(Total_cover))
+```
+- The warning here simply lets us know that NA values were set as NA and not numeric
+
+- Now, we must remove values greater than 100, or less than 0, using the same method as before
+
+```{r}
+snowsurvey_fixed[snowsurvey_fixed > 100 ] = NA
+snowsurvey_fixed[snowsurvey_fixed < 0 ] = NA
+```
+
+- Let's check some of the columns to see if this worked
+
+```{r}
+snowsurvey_fixed %>%
+  count(Land_cover)
+```
+
+```{r}
+snowsurvey_fixed %>%
+  count(Total_cover)
+```
+- The values greater than 100 in the total cover are all gone, and the values less than 0 in the Water cover data are gone as well, yay!
+
+- Just in case, we will compute the total_cover column using the water, land, and snow areas, and compare our total over to the original to see if any values were missing
+
+```{r}
+snowsurvey_fixed <- snowsurvey_fixed %>%
+  mutate(total_cover_recalc = Snow_cover + Land_cover + Water_cover) # Add all three area columns to find total area
+```
+
+```{r}
+# We will remove values over 100 and less than 0 again
+snowsurvey_fixed[snowsurvey_fixed > 100 ] = NA
+snowsurvey_fixed[snowsurvey_fixed < 0 ] = NA
+```
+
+```{r}
+# Now we compare to see if the columns are the same
+all(snowsurvey_fixed$Total_cover == snowsurvey_fixed$total_cover_recalc)
+```
+- The columns are not exactly the same! Meaning we should keep our recalculated total, but check to see why they are different
+
+```{r}
+snowsurvey_fixed %>%
+  count(total_cover_recalc)
+```
+
+```{r}
+snowsurvey_fixed %>%
+  count(Total_cover)
+```
+
+- There are more NA values, less 0 values, and slightly less 100 values in our new total_cover_recalc column. Since this data represents the actual percentages in the land, water, and snow cover columns, this infers that there are more inconsistencies in the recording of the data (values that added up to over 100 or less than 0) than we would infer from just the original Total_cover column. As we do not know which is more likely to have been recorded accurately (after reading through the metadata, Total_cover seemed as though it should have been all the columns added together but we see that was not the case), we should not fill in NA values in the water,land, or snow cover columns using the original Total_cover or total_cover_recalc columns. 
+
+- We would also run into issues with assigning values to columns with more than 1 NA or 0. For example, there are many instances in the data where snow cover is recorded, but both water and land cover are 0 so the total adds up to less than 100%, as opposed to all area values in the three columns being present but adding to less than 100%. In those cases, there is no way to accurately divide the remaining area percentage into the other two columns. This is another reason I chose not to reassign values when areas add to less than 100%.
+
+- With that being said, this version of snowsurvey_fixed is my final version, and we will save our cleaned data as a csv file
+
+```{r}
+# Check if the folder exists
+dir.create(datadir_processed, showWarnings = FALSE)
+
+# Write the final file as a csv
+write_csv(snowsurvey_fixed, file.path(datadir_processed, "all_cover_fixed_Enda.csv"))
+```
+
