@@ -2,6 +2,8 @@
 
 ## A project for [EDS 213](https://ucsb-library-research-data-services.github.io/bren-eds213/), coursework at the [Bren School of Environmental Science and Management](https://bren.ucsb.edu/)
 
+This README.md file format was created with the assistance of work from Greg Janée, Julien Brun, Bailey Jorgensen, Michelle Yiv, and much of the resources were pulled from the original metadata from the ARCTIC SHOREBIRD DEMOGRAPHICS NETWORK found [here](https://github.com/UCSB-Library-Research-Data-Services/bren-meds213-spring-2024-class-data/blob/main/week1/01_ASDN_Readme.txt).
+
 ### The data set
 
 ARCTIC SHOREBIRD DEMOGRAPHICS NETWORK [https://doi.org/10.18739/A2222R68W](https://doi.org/10.18739/A2222R68W)
@@ -28,8 +30,7 @@ See `01_ASDN_Readme.txt` provided in the [course data repository](https://github
 
 ├── data
 │   ├── processed
-│   │   ├── all_cover_fixed_JORGENSEN.csv
-│   │   ├── snow_cover.csv
+│   │   ├── all_cover_fixed_Enda.csv
 │   ├── raw
 │   │   ├── 01_ASDN_Readme.txt
 │   │   ├── ASDN_Daily_species.csv
@@ -54,21 +55,21 @@ See `01_ASDN_Readme.txt` provided in the [course data repository](https://github
 ├── .Rprofile
 ├── .gitignore
 ├── README.md
-├── all_cover_fixed_JORGENSEN.qmd
+├── eds_213_data_cleaning_assign_Enda.qmd
 ├── bren-meds213-data-cleaning.Rproj
-└── data-cleaning_empty.qmd
+└── eds213_data_cleaning.qmd
 ```
 
-**Description:** The data folder of this repository contains the arctic shorebirds data described above. The 'raw' folder contains the species presence and snow survey data, before it was cleaned in this analysis. The 'processed' folder contains the .csv files that are the result of the data cleaning which will be described in more detail below. 
+- The data folder of this repository contains the arctic shorebirds data described above. The 'raw' folder contains the species presence and snow survey data, before it was cleaned in this analysis. The 'processed' folder contains the .csv file that was the result of the data cleaning which will be described in more detail below. 
 
-The docs folder in this repository contains the folders and files that render the visuals for this assingment in a classroom setting. They are not relevant to the data cleaning described below. 
+- The docs folder in this repository contains the folders and files that render the visuals for this assingment in a classroom setting. They are not relevant to the data cleaning described below. 
 
-The all_cover_fixed_JORGENSEN.qmd file contains the described workflow and process behind the cleaning of this data. The data-cleaning_empty.qmd file is the file used for educational purposes to present the cleaning of the data. 
+- The eds_213_data_cleaning_assign_Enda.qmd file contains the described workflow and process behind the cleaning of this data. The eds213_data_cleaning.qmd file is the file used for educational purposes to present the cleaning of the data. 
 
 
 **2. Relationship between files:**
 
-For the purposes of exploring the cleaning of the data, the 'raw' folder contains the unclean data, which was processed in the 'all_cover_fixed_JORGENSEN.qmd' file, and the output of this is stored in the 'processed' folder. 
+For the purposes of exploring the cleaning of the data, the 'raw' folder contains the unclean data, which was processed in the 'all_cover_fixed_Enda.qmd' file, and the output of this is stored in the 'processed' folder. 
 
 **3. Additional related data collected that was not included in the current data package:**
 
@@ -206,16 +207,16 @@ In addition to information that these authors might provide, it is likely that u
 An up-to-date version of data from Barrow/Utqiagvik, including corrected and more recent data, is now housed here: https://arcticdata.io/catalog/view/doi:10.18739/A2VT1GP7Q .
 
 
-## DATA-SPECIFIC INFORMATION FOR 'all_cover_fixed_JORGENSEN.csv':
+## DATA-SPECIFIC INFORMATION FOR 'all_cover_fixed_Enda.csv':
 
 
 **1. Number of variables:**
 
-13 variables
+12 variables 
 
 **2. Number of cases/rows:**
 
-24200 observations/rows
+42830 observations/rows
 
 **3. Variable List:**
 
@@ -232,20 +233,24 @@ An up-to-date version of data from Barrow/Utqiagvik, including corrected and mor
 | `Total_cover`  | The total amount of coverage on on a plot of snow, water, or land. This number should always be 100, as it is the sum of the Snow_cover, Water_cover, and Land_cover columns.  |
 | `Observer`  | The personnel abbreviation of the person who collected the data point. |
 | `Notes`  | Any additional notes taken by the Observer at the time of data collection. |
-| `Total_cover_computed`  | The total amount of coverage on on a plot of snow, water, or land. This number should always be 100, as it is the sum of the Snow_cover, Water_cover, and Land_cover columns. This column was created to account for instances in the original data where the sum total was not 100. |
-| `Date2`  | The full date in which the data point was created, in day - month - year format, and accounting for instances where two dates were input onto one row. 
+| `total_cover_recalc`  | The total amount of coverage on on a plot of snow, water, or land. This number should always be 100, as it is the sum of the Snow_cover, Water_cover, and Land_cover columns. This column was created to account for instances in the original data where the sum total was not 100. |
 
 
 
 **4. Missing data codes:**
 
-In 'all_cover_fixed_JORGENSEN.csv', null values are all represented by NA. This is a change from the original data, where null values were represented by dashes, periods, unk, n/a, <1, and NA.
+In 'all_cover_fixed_Enda.csv', null values are all represented by NA. All the columns originally contained periods and dashes that needed to be removed, as well as a few negative area values, or values above 100. 
 
-**NOTE:** In the cleaning of this data, it was discovered that there were several missing variables. Specifically, there were values missing from the Snow_cover, Water_cover, and Land_cover columns. Since the Total_cover we know is the sum of these variables added to 100 (as the _cover columns represent percentages), some of these missing variables were able to be deduced based on the numbers present in the other columns. In these cases, this data was input. 
+I decided to use a method that cleans all columns of specified observations at once, and reassigns to itself so there is no need to use '\<-' to reassigning it again (after the first name change).
 
-There was a few instances where the numbers in one of the _cover columns were greater than 100. In this case, if the real amount of cover was unable to be deduced from the method described above, the number was converted to an NA. This is also true for numbers that were less than one or negative. 
+**NOTE:** 
 
-The species data table was, in this exercise, pivoted from wide to long, with numbers converted to a "bird counts" column. This eliminated the excess 0s in that table where no observations were made of a species, making the data easier to work with. 
+To remove uneccesary values and standardize metrics, the data was pivoted from wide format to long format, and the area columns were converted to numeric so we could compare percentages across columns using transformations. After values greater than 100 were removed, the total area column was recalculated to the actual sums of each 'Snow_cover', 'Land_cover', and 'Water_cover' columns.
+
+There were more NA values, less 0 values, and slightly less 100 values in our new 'total_cover_recalc' column than in the original 'Total_area' column. Since this data represents the actual percentages in the land, water, and snow cover columns, this implies that there are more inconsistencies in the recording of the data (values that added up to over 100 or less than 0) than we would infer from just the original Total_cover column. As we do not know which is more likely to have been recorded accurately (after reading through the metadata, Total_cover seemed as though it should have been all the columns added together but we see that was not the case), I decided not to fill in NA values in the water, land, or snow cover columns using the original Total_cover or total_cover_recalc columns.
+
+We would also run into issues with assigning values to rows with more than one 'NA' or '0' input. For example, there are many instances in the data where snow cover is recorded, but both water and land cover are '0', so the total adds up to less than 100%, as opposed to all area values in the three columns being present but adding to less than 100%. In those cases, there is no way to accurately divide the remaining area percentage into the other two columns. This is another reason I chose not to reassign values when areas add to less than 100%, and left those values as 0 and not NA, in case there was another type of cover that made up the remaining percent not recorded in this data set.
+
 
 **5. Specialized formats or other abbreviations used:**
 
